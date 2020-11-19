@@ -1,0 +1,107 @@
+---
+- hosts: all
+  become: yes
+
+  pre_tasks:
+    - name: update apt cache if needed
+      apt: "update_cache=yes cache_valid_time=36000"
+
+    - name: get the app from git repo
+      git:
+        repo: https://github.com/lthuita/yolo.git
+        dest: path=/opt/yolo
+        update: yes
+        version: master
+
+  tasks:
+    # Installing nodejs and npm on the frontend
+      - block:
+                - name: Install nodejs and npm on the client
+                  apt:
+                  state: present
+                  name: 
+                        - nodejs
+                        - npm
+                        - build-essential
+            
+                - name: Copy the frontend folder to vagrant
+                  command: mv /opt/yolo/client /home/vagrant
+                 
+                - name: Installing the required modules in package.json
+                  command: >
+                    chdir=/home/vagrant/client
+                    npm run build
+
+                - name: Run NPM
+                  command: >
+                    chdir=/home/vagrant/client
+                    npm install -g serve
+
+                - name: Create nohup.out file
+                  file:
+                    path: "/home/vagrant/nohup.out"
+                    state: touch
+
+                - name: Start the client app
+                  shell: 
+                    "nohup serve -s build -l 3000 </dev/null >/dev/null 2>&1 & "
+                   args:
+                    chdir: "/home/vagrant/client"
+
+            when: inventory_hostname == "client"
+
+    # Installing nodejs, npm and mongodb on the backend
+      - block:
+                - name: Install nodejs and npm on the backend hosts
+                  apt: 
+                        state: present
+                        name:
+                              - nodejs
+                              - npm
+                
+                - name: Installing the required modules in  package.json
+                  command: >
+                          chdir=/home/vagrant/backend
+                          npm install
+
+                - name: Install PM2 
+                  command: >
+                          chdir=/home/vagrant/backend
+                          npm install pm2 -g
+
+                - name: activating PM2
+                  become: yes
+                  become_user: vagrant
+                  command: pm2 list
+
+                - name: PM2 for systems automatic restart
+                  command: pm2 startup
+                
+                - name: PM2 startup
+                  become: yes
+                  become_user: vagrant
+                  command: >
+                          chdir=/home/vagrant/backend
+                          pm2 start --name yolo npm -- start
+                
+                - name: For automatic restarts
+                  command: pm2 Save
+
+                - name: Import public key used by the latest package management system
+                  apt_key: keysever=hkp://keyserver.ubuntu.com:80 id=7F0CEB10 state=present
+
+                - name: Add MongoDB respository
+                  apt_respository: repo='deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' state=present
+
+                - name: install mongodb
+                  apt: pkg=mongodb-org state=latest update_cache=yes
+                  notify:
+                  - start mongodb
+
+            when: inventory_hostname =="backend"
+
+        handlers:
+            - name: start mongodb
+              service: name=mongod state=started
+
+
