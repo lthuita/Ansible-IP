@@ -1,14 +1,15 @@
-Configuration Management IP
+Ansible IP
 
 Configuration management using Ansible and Vagrant
+
 Instructions
 
-    Clone this repo
+    - Clone this repo
 
-    Change to that directory
+    - Change to that directory
 
-    Run vagrant
+    - Run vagrant
 
-     vagrant up
+        vagrant up
 
 [Explanation](/Explanation.md)
