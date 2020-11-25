@@ -1,0 +1,22 @@
+# Frontend server
+[client]
+192.168.50.6
+
+# Backend server
+[backend]
+192.168.50.7
+
+# Mongodb server
+[mongodb]
+192.168.50.5
+
+# Group 'multi' with all servers
+[multi:children]
+client
+backend
+mongodb
+
+# Variables that will be applied to all servers
+[multi:vars]
+ansible_port = 2222
+ansible_ssh_user = vagrant
