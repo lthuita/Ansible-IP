@@ -12,4 +12,4 @@ Instructions
 
           vagrant up
 
-Explanation (/Explanation.md)
+Explanation (./Explanation.md)
